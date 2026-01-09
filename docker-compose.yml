@@ -3,24 +3,21 @@ services:
     image: jellyfin/jellyfin:latest
     pull_policy: always
     container_name: jellyfin
+    # Host mode is critical for DLNA/Casting discovery
     network_mode: host
-    volumes:
-      - ./jellyfin/config:/config
-      - /mnt/media/media:/media
     restart: unless-stopped
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Africa/Nairobi
+    volumes:
+      - ./jellyfin/config:/config
+      - /mnt/media/media:/media
+
   radarr:
     image: linuxserver/radarr:latest
     pull_policy: always
     container_name: radarr
-    network_mode: host
-    volumes:
-      - ./radarr/config:/config
-      - /mnt/media/media:/media
-      - /mnt/media/media/Downloads:/downloads
     ports:
       - 7878:7878
     restart: unless-stopped
@@ -28,15 +25,15 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Africa/Nairobi
+    volumes:
+      - ./radarr/config:/config
+      - /mnt/media/media:/media
+      - /mnt/media/media/Downloads:/downloads
+
   sonarr:
     image: linuxserver/sonarr:latest
     pull_policy: always
     container_name: sonarr
-    network_mode: host
-    volumes:
-      - ./sonarr/config:/config
-      - /mnt/media/media:/media
-      - /mnt/media/media/Downloads:/downloads
     ports:
       - 8989:8989
     restart: unless-stopped
@@ -44,13 +41,15 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Africa/Nairobi
+    volumes:
+      - ./sonarr/config:/config
+      - /mnt/media/media:/media
+      - /mnt/media/media/Downloads:/downloads
+
   prowlarr:
     image: linuxserver/prowlarr:latest
     pull_policy: always
     container_name: prowlarr
-    network_mode: host
-    volumes:
-      - ./prowlarr/config:/config
     ports:
       - 9696:9696
     restart: unless-stopped
@@ -58,15 +57,13 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Africa/Nairobi
+    volumes:
+      - ./prowlarr/config:/config
+
   qbittorrent:
     image: linuxserver/qbittorrent:latest
     pull_policy: always
     container_name: qbittorrent
-    network_mode: host
-    volumes:
-      - ./qbittorrent/config:/config
-      - /mnt/media/media/Downloads:/downloads
-      - /mnt/media/media:/media
     ports:
       - 8080:8080
       - 6881:6881
@@ -77,15 +74,15 @@ services:
       - PGID=1000
       - TZ=Africa/Nairobi
       - WEBUI_PORT=8080
+    volumes:
+      - ./qbittorrent/config:/config
+      - /mnt/media/media/Downloads:/downloads
+      - /mnt/media/media:/media
+
   jackett:
     image: linuxserver/jackett:latest
     pull_policy: always
     container_name: jackett
-    network_mode: host
-    volumes:
-      - ./jackett/config:/config
-      - /mnt/media/media/Downloads:/downloads
-      - /mnt/media/media:/media
     ports:
       - 9117:9117
     restart: unless-stopped
@@ -93,3 +90,19 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Africa/Nairobi
+    volumes:
+      - ./jackett/config:/config
+      - /mnt/media/media/Downloads:/downloads
+
+  jellyseerr:
+    image: ghcr.io/fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    init: true
+    restart: unless-stopped
+    ports:
+      - 5055:5055
+    environment:
+      - LOG_LEVEL=debug
+      - TZ=Africa/Nairobi
+    volumes:
+      - ./jellyseerr/appdata/config:/app/config
