@@ -106,3 +106,26 @@ services:
       - TZ=Africa/Nairobi
     volumes:
       - ./jellyseerr/appdata/config:/app/config
+  # flaresolverr:
+  #   image: flaresolverr/flaresolverr:latest
+  #   container_name: flaresolverr
+  #   network_mode: host
+  #   environment:
+  #     - LOG_LEVEL=info
+  #     - TZ=Africa/Nairobi
+  #   restart: unless-stopped
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    network_mode: host
+    volumes:
+      - ./uptime-kuma-data:/app/data
+    restart: always
+  requestrr:
+    image: darkalfx/requestrr
+    container_name: requestrr
+    network_mode: host
+    volumes:
+      - ./requestrr/config:/root/config
+    restart: unless-stopped
