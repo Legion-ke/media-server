@@ -1,10 +1,8 @@
 services:
   jellyfin:
     image: jellyfin/jellyfin:latest
-    pull_policy: always
     container_name: jellyfin
-    # Host mode is critical for DLNA/Casting discovery
-    network_mode: host
+    network_mode: host # Critical for DLNA/Casting
     restart: unless-stopped
     environment:
       - PUID=1000
@@ -12,62 +10,19 @@ services:
       - TZ=Africa/Nairobi
     volumes:
       - ./jellyfin/config:/config
-      - /mnt/media/media:/media
+      # Single volume for atomic moves
+      - /mnt/media/media:/data
+    devices:
+      # INTEL QUICK SYNC (For your UHD 620)
+      - /dev/dri:/dev/dri
 
-  radarr:
-    image: linuxserver/radarr:latest
-    pull_policy: always
-    container_name: radarr
-    ports:
-      - 7878:7878
-    restart: unless-stopped
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Africa/Nairobi
-    volumes:
-      - ./radarr/config:/config
-      - /mnt/media/media:/media
-      - /mnt/media/media/Downloads:/downloads
-
-  sonarr:
-    image: linuxserver/sonarr:latest
-    pull_policy: always
-    container_name: sonarr
-    ports:
-      - 8989:8989
-    restart: unless-stopped
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Africa/Nairobi
-    volumes:
-      - ./sonarr/config:/config
-      - /mnt/media/media:/media
-      - /mnt/media/media/Downloads:/downloads
-
-  prowlarr:
-    image: linuxserver/prowlarr:latest
-    pull_policy: always
-    container_name: prowlarr
-    ports:
-      - 9696:9696
-    restart: unless-stopped
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Africa/Nairobi
-    volumes:
-      - ./prowlarr/config:/config
-
+  # ==========================================
+  # DOWNLOADER
+  # ==========================================
   qbittorrent:
-    image: linuxserver/qbittorrent:latest
-    pull_policy: always
+    image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
-    ports:
-      - 8080:8080
-      - 6881:6881
-      - 6881:6881/udp
+    network_mode: host # Critical for DHT/Magnet links
     restart: unless-stopped
     environment:
       - PUID=1000
@@ -76,15 +31,56 @@ services:
       - WEBUI_PORT=8080
     volumes:
       - ./qbittorrent/config:/config
-      - /mnt/media/media/Downloads:/downloads
-      - /mnt/media/media:/media
+      # Maps to the same structure as Jellyfin/Sonarr
+      - /mnt/media/media:/data
 
+  # ==========================================
+  # THE "ARR" STACK
+  # ==========================================
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Africa/Nairobi
+    volumes:
+      - ./sonarr/config:/config
+      - /mnt/media/media:/data
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Africa/Nairobi
+    volumes:
+      - ./radarr/config:/config
+      - /mnt/media/media:/data
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Africa/Nairobi
+    volumes:
+      - ./prowlarr/config:/config
+
+  # (Optional: Prowlarr does everything Jackett does but better.
+  # You can keep this if you have specific legacy needs.)
   jackett:
-    image: linuxserver/jackett:latest
-    pull_policy: always
+    image: lscr.io/linuxserver/jackett:latest
     container_name: jackett
-    ports:
-      - 9117:9117
+    network_mode: host
     restart: unless-stopped
     environment:
       - PUID=1000
@@ -97,24 +93,18 @@ services:
   jellyseerr:
     image: ghcr.io/fallenbagel/jellyseerr:latest
     container_name: jellyseerr
+    network_mode: host # Easier to connect to Sonarr/Radarr on localhost
     init: true
     restart: unless-stopped
-    ports:
-      - 5055:5055
     environment:
       - LOG_LEVEL=debug
       - TZ=Africa/Nairobi
     volumes:
       - ./jellyseerr/appdata/config:/app/config
-  # flaresolverr:
-  #   image: flaresolverr/flaresolverr:latest
-  #   container_name: flaresolverr
-  #   network_mode: host
-  #   environment:
-  #     - LOG_LEVEL=info
-  #     - TZ=Africa/Nairobi
-  #   restart: unless-stopped
 
+  # ==========================================
+  # UTILITIES
+  # ==========================================
   uptime-kuma:
     image: louislam/uptime-kuma:1
     container_name: uptime-kuma
@@ -122,6 +112,7 @@ services:
     volumes:
       - ./uptime-kuma-data:/app/data
     restart: always
+
   requestrr:
     image: darkalfx/requestrr
     container_name: requestrr
